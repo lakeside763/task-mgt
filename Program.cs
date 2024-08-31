@@ -2,13 +2,22 @@ using TaskMgt;
 using TaskMgt.GroupService;
 using TaskMgt.Routes;
 using TaskMgt.Services.ListService;
+using TaskMgt.Services.TaskService;
 
 var builder = WebApplication.CreateBuilder(args);
+
+DotNetEnv.Env.Load();
+
+// Access environment variables
+var mongoDbUrl = Environment.GetEnvironmentVariable("MongoDbURL");
+var redisUrl = Environment.GetEnvironmentVariable("RedisURL");
+
+builder.Configuration["ConnectionStrings:MongoDb"] = mongoDbUrl;
 
 // Add services to the container.
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddStackExchangeRedisCache(options => {
-    options.Configuration = "localhost:6379";
+    options.Configuration = redisUrl;
     options.InstanceName ="TaskMgt_";
 });
 builder.Services.AddSingleton<MongoDbContext>();
@@ -17,6 +26,18 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddScoped<IGroupService, GroupService>();
 builder.Services.AddScoped<IListService, ListService>();
+builder.Services.AddScoped<ITaskService, TaskService>();
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAllOrigins",
+        policy =>
+        {
+            policy.AllowAnyOrigin()    // Allows requests from any origin
+                  .AllowAnyHeader()    // Allows any headers
+                  .AllowAnyMethod();   // Allows any HTTP method (GET, POST, etc.)
+        });
+});
 
 var app = builder.Build();
 
@@ -28,6 +49,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+app.UseCors("AllowAllOrigins");
 
 app.MapGroupRoutes();
 app.MapListRoutes();

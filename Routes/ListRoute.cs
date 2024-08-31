@@ -37,6 +37,12 @@ namespace TaskMgt.Routes
                 var list = await listService.DeleteList(id);
                 return Results.Ok(list);
             });
+
+            routes.MapGet("lists", async ([FromServices] IListService listService) => 
+            {
+                var lists = await listService.GetLists();
+                return Results.Ok(lists);
+            });
         } 
     }
 }

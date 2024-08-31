@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using TaskMgt.Dtos.TaskDto;
 using TaskMgt.Models;
 
@@ -14,5 +15,7 @@ namespace TaskMgt.Services.TaskService
         Task<ServiceResponse<GetTaskDto>> UpdateTask(UpdateTaskDto task, string id);
 
         Task<ServiceResponse<GetTaskDto>> DeletTask(string id);
+
+        Task<ServiceResponse<IEnumerable<GetTaskDto>>> GetTasks();
     }
 }

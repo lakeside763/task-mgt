@@ -1,6 +1,7 @@
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 
+
 namespace TaskMgt.Dtos.TaskDto
 {
     public class CreateTaskDto
@@ -13,6 +14,21 @@ namespace TaskMgt.Dtos.TaskDto
         
         [BsonElement("description")]
         public string? Description { get; set; }
+
+        [BsonElement("status")]
+        public TaskStatus? Status { get; set; } = TaskStatus.NOT_STARTED;
+
+        [BsonElement("priority")]
+        public required TaskPriority Priority { get; set; } = TaskPriority.LOW;
+
+        [BsonElement("date")]
+        public DateTime Date { get; set; }
+
+        [BsonElement("startTime")]
+        public string? StartTime { get; set; }
+
+        [BsonElement("endTime")]
+        public string? EndTime { get; set; }
         
         [BsonElement("createdAt")]
         public DateTime CreatedAt { get; set; } = DateTime.Now;

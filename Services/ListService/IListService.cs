@@ -7,6 +7,8 @@ namespace TaskMgt.Services.ListService
     {
         Task<ServiceResponse<GetGroupListsDto>> GetListByGroupId(string groupId);
 
+        Task<ServiceResponse<IEnumerable<GetListWithGroupDto>>> GetLists();
+
         Task<ServiceResponse<GetListDto>> GetListById(string id);
 
         Task<ServiceResponse<GetListDto>> CreateList(CreateListDto list);

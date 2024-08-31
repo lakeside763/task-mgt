@@ -18,6 +18,7 @@ namespace TaskMgt
             CreateMap<TodoTask, GetTaskDto>();
             CreateMap<CreateTaskDto, TodoTask>();
             CreateMap<List, GetListTasksDto>();
+            CreateMap<List, GetListWithGroupDto>();
         }
     }
 }

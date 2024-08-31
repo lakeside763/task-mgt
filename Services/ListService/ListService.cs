@@ -4,6 +4,7 @@ using TaskMgt.Dtos.ListDto;
 using TaskMgt.Models;
 using Microsoft.Extensions.Caching.Distributed;
 using System.Text.Json;
+using Dtos.GroupDto;
 
 namespace TaskMgt.Services.ListService
 {
@@ -46,6 +47,7 @@ namespace TaskMgt.Services.ListService
 
                 // Invalidate cache for the group lists
                 await _cache.RemoveAsync($"GroupLists_{list.GroupId}");
+                await _cache.RemoveAsync("AllListsWithGroup");
 
                 serviceResponse.Data = listDto;
                 serviceResponse.Message = "List created successfully";
@@ -79,6 +81,7 @@ namespace TaskMgt.Services.ListService
 
                 // Invalidate cache for the group lists
                 await _cache.RemoveAsync($"GroupLists_{list.GroupId}");
+                await _cache.RemoveAsync("AllListsWithGroup");
 
                 serviceResponse.Success = true;
                 serviceResponse.Message = "List deleted successfully";
@@ -211,6 +214,7 @@ namespace TaskMgt.Services.ListService
                 // Invalidate cache for this list and group lists
                 await _cache.RemoveAsync($"List_{id}");
                 await _cache.RemoveAsync($"GroupLists_{existingList.GroupId}");
+                await _cache.RemoveAsync("AllListsWithGroup");
 
                 serviceResponse.Data = updatedListDto;
                 serviceResponse.Message = "List updated successfully";
@@ -220,6 +224,52 @@ namespace TaskMgt.Services.ListService
             {
                 serviceResponse.Success = false;
                 serviceResponse.Message = $"Error occurred while updating the list: {ex.Message}";
+            }
+            return serviceResponse;
+        }
+
+        public async Task<ServiceResponse<IEnumerable<GetListWithGroupDto>>> GetLists()
+        {
+            var serviceResponse = new ServiceResponse<IEnumerable<GetListWithGroupDto>>();
+            try
+            {
+                var cacheKey = "AllListsWithGroup";
+                var cachedListsWithGroup = await _cache.GetStringAsync(cacheKey);
+
+                if (string.IsNullOrEmpty(cachedListsWithGroup))
+                {
+                    var lists = await _context.Lists.Find(_ => true).ToListAsync();
+
+                    // Fetch group details in parallel
+                    var listWithGroupTasks = lists.Select(async list => 
+                    {
+                        var listWithGroupDto = _mapper.Map<GetListWithGroupDto>(list);
+
+                        if (!string.IsNullOrEmpty(list.GroupId))
+                        {
+                            var group = await _context.Groups
+                                .Find(g => g.Id == list.GroupId)
+                                .FirstOrDefaultAsync();
+                            listWithGroupDto.Group = _mapper.Map<GetGroupDto>(group);
+                        }
+                        return listWithGroupDto;
+                    });
+                    var listWithGroup = await Task.WhenAll(listWithGroupTasks);
+
+                    var cacheOptions = new DistributedCacheEntryOptions
+                    {
+                        AbsoluteExpirationRelativeToNow = CacheExpiration
+                    };
+                    cachedListsWithGroup = JsonSerializer.Serialize(listWithGroup);
+                    await _cache.SetStringAsync(cacheKey, cachedListsWithGroup, cacheOptions);
+                }
+                serviceResponse.Data = JsonSerializer.Deserialize<IEnumerable<GetListWithGroupDto>>(cachedListsWithGroup);
+                return serviceResponse;
+            }
+            catch (Exception ex)
+            {
+                serviceResponse.Success = false;
+                serviceResponse.Message = $"Error occured while fetching lists: {ex.Message}";
             }
             return serviceResponse;
         }

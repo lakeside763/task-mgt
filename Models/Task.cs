@@ -1,5 +1,21 @@
+using System.Text.Json.Serialization;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
+
+[JsonConverter(typeof(JsonStringEnumConverter))]
+  public enum TaskStatus {
+    NOT_STARTED,
+    IN_PROGRESS,
+    COMPLETED,
+  }
+
+  [JsonConverter(typeof(JsonStringEnumConverter))]
+  public enum TaskPriority {
+    LOW,
+    MEDIUM,
+    HIGH,
+    CRITICAL
+  }
 
 namespace TaskMgt.Models
 {
@@ -19,10 +35,19 @@ namespace TaskMgt.Models
       public string? Description { get; set; }
 
       [BsonElement("status")]
-      public required string Status { get; set; }
+      public TaskStatus? Status { get; set; }
 
-      [BsonElement("dueDate")]
-      public DateTime DueDate { get; set; }
+      [BsonElement("priority")]
+      public TaskPriority? Priority { get; set; }
+
+      [BsonElement("date")]
+      public DateTime Date { get; set; }
+
+      [BsonElement("startTime")]
+      public string? StartTime { get; set; }
+
+      [BsonElement("endTime")]
+      public string? EndTime { get; set; }
 
       [BsonElement("createdAt")]
       public DateTime CreatedAt { get; set; }

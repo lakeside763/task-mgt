@@ -11,5 +11,10 @@ namespace TaskMgt.Dtos.TaskDto
         
         [BsonElement("description")]
         public string? Description { get; set; }
+
+        public TaskStatus? Status { get; set; }
+
+        [BsonElement("priority")]
+        public TaskPriority? Priority { get; set; }
     }
 }

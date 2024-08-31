@@ -36,6 +36,9 @@ namespace TaskMgt.Services.TaskService
                     return serviceResponse;
                 }
                 var task = _mapper.Map<TodoTask>(newTask);
+                
+                Console.WriteLine(task);
+                
                 await _context.Tasks.InsertOneAsync(task);
 
                 var createdTask = await _context.Tasks
@@ -46,6 +49,7 @@ namespace TaskMgt.Services.TaskService
 
                 // Invalidate cache for the list tasks
                 await _cache.RemoveAsync($"ListTasks_{task.ListId}");
+                await _cache.RemoveAsync("AllTasks");
 
                 serviceResponse.Data = taskDto;
                 serviceResponse.Message = "Task created successfully";
@@ -78,6 +82,7 @@ namespace TaskMgt.Services.TaskService
 
                 // Invalidate cache for the list tasks
                 await _cache.RemoveAsync($"ListTasks_{task.ListId}");
+                await _cache.RemoveAsync("AllTasks");
 
                 serviceResponse.Success = true;
                 serviceResponse.Message = "List deleted successfully";
@@ -199,6 +204,8 @@ namespace TaskMgt.Services.TaskService
                 }
                 existingTask.Name = task.Name ?? existingTask.Name;
                 existingTask.Description = task.Description ?? existingTask.Description;
+                existingTask.Priority = task.Priority ?? existingTask.Priority;
+                existingTask.Status = task.Status ?? existingTask.Status;
                 existingTask.Update();
 
                 await _context.Tasks.ReplaceOneAsync(t => t.Id == id, existingTask);
@@ -208,6 +215,7 @@ namespace TaskMgt.Services.TaskService
                 // Invalidate cache for this task and list tasks
                 await _cache.RemoveAsync($"Task_{id}");
                 await _cache.RemoveAsync($"ListTasks_{existingTask.ListId}");
+                await _cache.RemoveAsync("AllTasks");
 
                 serviceResponse.Data = updatedTaskDto;
                 serviceResponse.Message = "Task updated successfully";
@@ -217,6 +225,41 @@ namespace TaskMgt.Services.TaskService
             {
                 serviceResponse.Success = false;
                 serviceResponse.Message = $"Error occurred while updating the task: {ex.Message}";
+            }
+            return serviceResponse;
+        }
+
+        public async Task<ServiceResponse<IEnumerable<GetTaskDto>>> GetTasks()
+        {
+            var serviceResponse = new ServiceResponse<IEnumerable<GetTaskDto>>();
+            try
+            {
+                var cacheKey = "AllTasks";
+                var cachedTasks = await _cache.GetStringAsync(cacheKey);
+
+                if (string.IsNullOrEmpty(cachedTasks))
+                {
+                    var tasks = await _context.Tasks
+                        .Find(_ => true)
+                        .SortByDescending(t => t.CreatedAt)
+                        .Limit(10)
+                        .ToListAsync();
+                    var taskDtos = _mapper.Map<IEnumerable<GetTaskDto>>(tasks);
+
+                    var cacheOptions = new DistributedCacheEntryOptions
+                    {
+                        AbsoluteExpirationRelativeToNow = CacheExpiration
+                    };
+                    cachedTasks = JsonSerializer.Serialize(taskDtos);
+                    await _cache.SetStringAsync(cacheKey, cachedTasks, cacheOptions);
+                }
+                serviceResponse.Data = JsonSerializer.Deserialize<IEnumerable<GetTaskDto>>(cachedTasks);
+                return serviceResponse;
+            }
+            catch (Exception ex)
+            {
+                serviceResponse.Success = false;
+                serviceResponse.Message = $"Error occurred while fetching tasks: {ex.Message}";
             }
             return serviceResponse;
         }

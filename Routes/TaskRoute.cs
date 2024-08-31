@@ -8,6 +8,11 @@ namespace TaskMgt.Routes
     {
         public static void MapTaskRoutes(this IEndpointRouteBuilder routes)
         {
+            routes.MapGet("/tasks", async ([FromServices] ITaskService taskService) => 
+            {
+                var tasks = await taskService.GetTasks();
+                return Results.Ok(tasks);
+            });
             routes.MapGet("/lists/{id}/tasks", async ([FromServices] ITaskService taskService, [FromRoute] string id) => 
             {
                 var list = await taskService.GetTasksByListId(id);
