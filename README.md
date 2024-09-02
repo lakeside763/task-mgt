@@ -11,7 +11,7 @@ Simple task management solution
 
 #### Installation
 ```
-- update env file wit the sample.env
+- update env file with the sample.env
 - git clone https://github.com/lakeside763/task-mgt.git
 - cd TaskMgt
 - dotnet build
