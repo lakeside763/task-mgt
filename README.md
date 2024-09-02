@@ -29,5 +29,5 @@ dotnet run
 - Implement Group Service, Interface, Models and DTOs
 - Implement List Service, Interface, Models and DTOs
 - Implement Task Service, Interface, Models and DTOs
-- Clean and code maintainability
+- Clean code and maintainability
 - etc.
