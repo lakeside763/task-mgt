@@ -11,9 +11,10 @@ Simple task management solution
 
 #### Installation
 ```
-git clone https://github.com/lakeside763/task-mgt.git
-cd TaskMgt
-dotnet build
+- update env file wit the sample.env
+- git clone https://github.com/lakeside763/task-mgt.git
+- cd TaskMgt
+- dotnet build
 ```
 
 #### Run the application
